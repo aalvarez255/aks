@@ -26,6 +26,10 @@ jobs:
 
         EOT
       workingDirectory: deploy/terraform
+  - task: CmdLine@2
+    displayName: install 'unzip'
+    inputs:
+      script: sudo apt install unzip
   - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
     displayName: 'Install Terraform'
     inputs:
