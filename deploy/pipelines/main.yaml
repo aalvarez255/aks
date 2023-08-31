@@ -30,6 +30,7 @@ jobs:
     displayName: 'Install Terraform'
     inputs:
       terraformVersion: 'latest'
+      workingDirectory: deploy/terraform
   - task: CmdLine@2
     displayName: terraform init
     inputs:
