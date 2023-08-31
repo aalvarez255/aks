@@ -1,59 +1,56 @@
 trigger:
 - main
 
-pool:
-  vmImage: ubuntu-latest
+jobs:
+- job: Infrastructure deployment 
+  pool:
+    vmImage: 'ubuntu-latest'
+    steps:
+      - task: CmdLine@2
+        displayName: Init tfstate.tf
+        inputs:
+          script: >
+            cat << EOT >> tfstate.tf
 
-variables:
-  - group: tfstate-storage
-  - group: azure-subscription
+            terraform {
+              backend "azurerm" {
+                storage_account_name      = "$(storage_account)"
+                container_name            = "aks"
+                key                       = "terraform.tfstate"
+                access_key                = "$(access_key)"
+              }
+            }
 
-steps:
-  - task: CmdLine@2
-    displayName: Init tfstate.tf
-    inputs:
-      script: >
-        cat << EOT >> tfstate.tf
+            EOT
+          workingDirectory: deploy/terraform
+      - task: TerraformTaskV4@0
+        displayName: 'Install Terraform'
+        inputs:
+          terraformVersion: 'latest'
+      - task: CmdLine@2
+        displayName: terraform init
+        inputs:
+          script: terraform init
+          workingDirectory: deploy/terraform
+      - task: CmdLine@2
+        displayName: Create env.tfvars
+        inputs:
+          script: >
+            cat << EOT >> env.tfvars
 
-        terraform {
-          backend "azurerm" {
-            storage_account_name      = "$(storage_account)"
-            container_name            = "aks"
-            key                       = "terraform.tfstate"
-            access_key                = "$(access_key)"
-          }
-        }
+            tenant_id                   = "$(tenant_id)"
+            subscription_id             = "$(subscription_id)"
+            client_id                   = "$(client_id)"
+            client_secret               = "$(client_secret)"
 
-        EOT
-      workingDirectory: deploy/terraform
-  - task: TerraformTaskV4@0
-    displayName: 'Install Terraform'
-    inputs:
-      terraformVersion: 'latest'
-  - task: CmdLine@2
-    displayName: terraform init
-    inputs:
-      script: terraform init
-      workingDirectory: deploy/terraform
-  - task: CmdLine@2
-    displayName: Create env.tfvars
-    inputs:
-      script: >
-        cat << EOT >> env.tfvars
-
-        tenant_id                   = "$(tenant_id)"
-        subscription_id             = "$(subscription_id)"
-        client_id                   = "$(client_id)"
-        client_secret               = "$(client_secret)"
-
-        EOT
-  - task: CmdLine@2
-    displayName: terraform plan
-    inputs:
-      script: terraform plan -var-file="env.tfvars"
-      workingDirectory: deploy/terraform
-  - task: CmdLine@2
-    displayName: terraform apply
-    inputs:
-      script: terraform apply -auto-approve -var-file="env.tfvars"
-      workingDirectory: deploy/terraform
+            EOT
+      - task: CmdLine@2
+        displayName: terraform plan
+        inputs:
+          script: terraform plan -var-file="env.tfvars"
+          workingDirectory: deploy/terraform
+      - task: CmdLine@2
+        displayName: terraform apply
+        inputs:
+          script: terraform apply -auto-approve -var-file="env.tfvars"
+          workingDirectory: deploy/terraform
