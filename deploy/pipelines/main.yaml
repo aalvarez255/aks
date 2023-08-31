@@ -2,7 +2,7 @@ trigger:
 - main
 
 jobs:
-- job: Infrastructure deployment 
+- job: infrastructure_deployment 
   pool:
     vmImage: 'ubuntu-latest'
     steps:
