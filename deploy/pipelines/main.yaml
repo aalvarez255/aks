@@ -26,7 +26,7 @@ jobs:
 
         EOT
       workingDirectory: deploy/terraform
-  - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@0
+  - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
     displayName: 'Install Terraform'
     inputs:
       terraformVersion: 'latest'
