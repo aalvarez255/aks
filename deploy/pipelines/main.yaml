@@ -63,7 +63,6 @@ stages:
       inputs:
         script: terraform plan -var-file="env.tfvars"
         workingDirectory: deploy/terraform
-
 - stage: terraform_apply
   displayName: Terraform apply
   dependsOn:
@@ -81,6 +80,7 @@ stages:
       runOnce:
         deploy:
           steps:
+          - checkout: self
           - task: CmdLine@2
             displayName: Init tfstate.tf
             inputs:
