@@ -51,6 +51,7 @@ jobs:
         client_secret               = "$(client_secret)"
 
         EOT
+      workingDirectory: deploy/terraform
   - task: CmdLine@2
     displayName: terraform plan
     inputs:
