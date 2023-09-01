@@ -46,8 +46,11 @@ jobs:
         cat << EOT >> env.tfvars
 
         tenant_id                   = "$(tenant_id)"
+        
         subscription_id             = "$(subscription_id)"
+
         client_id                   = "$(client_id)"
+        
         client_secret               = "$(client_secret)"
 
         EOT
