@@ -1,67 +1,129 @@
 trigger:
 - main
 
-jobs:
-- job: infrastructure_deployment 
-  pool:
-    name: 'Azure VM Scale Set'
-  variables:
-  - group: azure-subscription
-  - group: tfstate-storage
-  steps:
-  - task: CmdLine@2
-    displayName: Init tfstate.tf
-    inputs:
-      script: >
-        cat << EOT >> tfstate.tf
+stages:
+- stage: terraform_plan
+  displayName: Terraform plan
+  jobs:
+  - job: terraform_plan
+    pool:
+      name: 'Azure VM Scale Set'
+    variables:
+    - group: azure-subscription
+    - group: tfstate-storage
+    steps:
+    - task: CmdLine@2
+      displayName: Init tfstate.tf
+      inputs:
+        script: >
+          cat << EOT >> tfstate.tf
 
-        terraform {
-          backend "azurerm" {
-            storage_account_name      = "$(storage_account)"
-            container_name            = "aks"
-            key                       = "terraform.tfstate"
-            access_key                = "$(access_key)"
+          terraform {
+            backend "azurerm" {
+              storage_account_name      = "$(storage_account)"
+              container_name            = "aks"
+              key                       = "terraform.tfstate"
+              access_key                = "$(access_key)"
+            }
           }
-        }
 
-        EOT
-      workingDirectory: deploy/terraform
-  - task: CmdLine@2
-    displayName: install 'unzip'
-    inputs:
-      script: sudo apt install unzip
-  - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
-    displayName: 'Install Terraform'
-    inputs:
-      terraformVersion: 'latest'
-  - task: CmdLine@2
-    displayName: terraform init
-    inputs:
-      script: terraform init
-      workingDirectory: deploy/terraform
-  - task: CmdLine@2
-    displayName: Create env.tfvars
-    inputs:
-      script: >
-        cat << EOT >> env.tfvars
+          EOT
+        workingDirectory: deploy/terraform
+    - task: CmdLine@2
+      displayName: install 'unzip'
+      inputs:
+        script: sudo apt install unzip
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+      displayName: 'Install Terraform'
+      inputs:
+        terraformVersion: 'latest'
+    - task: CmdLine@2
+      displayName: terraform init
+      inputs:
+        script: terraform init
+        workingDirectory: deploy/terraform
+    - task: CmdLine@2
+      displayName: Create env.tfvars
+      inputs:
+        script: >
+          cat << EOT >> env.tfvars
 
-        tenant_id                   = "$(tenant_id)"
-        
-        subscription_id             = "$(subscription_id)"
+          tenant_id                   = "$(tenant_id)"
+          
+          subscription_id             = "$(subscription_id)"
 
-        client_id                   = "$(client_id)"
-        
-        client_secret               = "$(client_secret)"
+          client_id                   = "$(client_id)"
 
-        EOT
-      workingDirectory: deploy/terraform
-  - task: CmdLine@2
-    displayName: terraform plan
-    inputs:
-      script: terraform plan -var-file="env.tfvars"
-      workingDirectory: deploy/terraform
-  - task: CmdLine@2
-    displayName: terraform apply
-    inputs:
-      script: terraform apply -auto-approve -var-file="env.tfvars"
-      workingDirectory: deploy/terraform
+          client_secret               = "$(client_secret)"
+
+          EOT
+        workingDirectory: deploy/terraform
+    - task: CmdLine@2
+      displayName: terraform plan
+      inputs:
+        script: terraform plan -var-file="env.tfvars"
+        workingDirectory: deploy/terraform
+    - task: CmdLine@2
+      displayName: terraform apply
+      inputs:
+        script: terraform apply -auto-approve -var-file="env.tfvars"
+        workingDirectory: deploy/terraform
+
+- stage: terraform_apply
+  displayName: Terraform apply
+  dependsOn:
+  - terraform_plan
+  jobs:
+  - job: terraform_apply
+    pool:
+      name: 'Azure VM Scale Set'
+    variables:
+    - group: azure-subscription
+    - group: tfstate-storage
+    steps: 
+    - task: CmdLine@2
+      displayName: Init tfstate.tf
+      inputs:
+        script: >
+          cat << EOT >> tfstate.tf
+
+          terraform {
+            backend "azurerm" {
+              storage_account_name      = "$(storage_account)"
+              container_name            = "aks"
+              key                       = "terraform.tfstate"
+              access_key                = "$(access_key)"
+            }
+          }
+
+          EOT
+        workingDirectory: deploy/terraform
+    - task: CmdLine@2
+      displayName: install 'unzip'
+      inputs:
+        script: sudo apt install unzip
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+      displayName: 'Install Terraform'
+      inputs:
+        terraformVersion: 'latest'        
+    - task: CmdLine@2
+      displayName: Create env.tfvars
+      inputs:
+        script: >
+          cat << EOT >> env.tfvars
+
+          tenant_id                   = "$(tenant_id)"
+          
+          subscription_id             = "$(subscription_id)"
+
+          client_id                   = "$(client_id)"
+
+          client_secret               = "$(client_secret)"
+
+          EOT
+        workingDirectory: deploy/terraform
+    - task: CmdLine@2
+      displayName: terraform apply
+      inputs:
+        script: terraform apply -auto-approve -var-file="env.tfvars"
+        workingDirectory: deploy/terraform

@@ -1,5 +1,5 @@
 locals {
-  nodepools = []
+  nodepools = {}
 }
 
 resource "azurerm_resource_group" "rg" {
