@@ -63,11 +63,6 @@ stages:
       inputs:
         script: terraform plan -var-file="env.tfvars"
         workingDirectory: deploy/terraform
-    - task: CmdLine@2
-      displayName: terraform apply
-      inputs:
-        script: terraform apply -auto-approve -var-file="env.tfvars"
-        workingDirectory: deploy/terraform
 
 - stage: terraform_apply
   displayName: Terraform apply
