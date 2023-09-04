@@ -37,9 +37,17 @@ resource "azurerm_kubernetes_cluster_node_pool" "nodepools" {
 }
 
 resource "azurerm_container_registry" "acr" {
-  name                = "akscontainerregistry001"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
-  sku                 = "Basic"
-  admin_enabled       = false
+  name                          = "akscontainerregistry001"
+  resource_group_name           = azurerm_resource_group.rg.name
+  location                      = azurerm_resource_group.rg.location
+  sku                           = "Basic"
+  admin_enabled                 = false
+  public_network_access_enabled = false
+}
+
+resource "azurerm_role_assignment" "aks_role" {
+  principal_id                     = azurerm_kubernetes_cluster.aks.kubelet_identity[0].object_id
+  role_definition_name             = "AcrPull"
+  scope                            = azurerm_container_registry.acr.id
+  skip_service_principal_aad_check = true
 }
