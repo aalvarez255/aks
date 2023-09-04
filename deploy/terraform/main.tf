@@ -35,11 +35,3 @@ resource "azurerm_kubernetes_cluster_node_pool" "nodepools" {
   node_taints           = each.value.node_taints
   vm_size               = each.value.vm_size
 }
-
-resource "azurerm_container_registry" "acr" {
-  name                          = "akscontainerregistry001"
-  resource_group_name           = azurerm_resource_group.rg.name
-  location                      = azurerm_resource_group.rg.location
-  sku                           = "Basic"
-  admin_enabled                 = false
-}
