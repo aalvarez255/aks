@@ -36,10 +36,23 @@ resource "azurerm_kubernetes_cluster_node_pool" "nodepools" {
   vm_size               = each.value.vm_size
 }
 
+resource "azurerm_user_assigned_identity" "acr_identity" {
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  name                = "registry-identity"
+}
+
 resource "azurerm_container_registry" "acr" {
   name                          = "akscontainerregistry001"
   resource_group_name           = azurerm_resource_group.rg.name
   location                      = azurerm_resource_group.rg.location
   sku                           = "Basic"
-  admin_enabled                 = true
+  admin_enabled                 = false
+
+  identity {
+    type = "UserAssigned"
+    identity_ids = [
+      azurerm_user_assigned_identity.acr_identity.id
+    ]
+  }
 }
